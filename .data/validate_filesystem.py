@@ -74,6 +74,7 @@ def main():
             path != "."
             and not any(x in path for x in ["invalid", "false"])
             and not directory_has_report
+            and len(items) > 1
         ):
             errors.append("Directory %s does not have a best report selected." % path)
 
