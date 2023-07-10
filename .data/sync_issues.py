@@ -112,11 +112,11 @@ def process_directory(repo, path):
         dir_issues_ids = []
         severity = "false"
         if item.type == "dir":
-            closed = any(x in item.name for x in ["low", "false", "invalid"])
+            closed = any(x in item.name.lower() for x in ["low", "false", "invalid"])
             # If it's a directory, we have some duplicate issues
             files = list(repo.get_contents(item.path))
             dirs = [x for x in files if x.type == 'dir']
-            files = [x for x in files if x.type != 'dir']
+            files = [x for x in files if x.type != 'dir' and x.name not in [".gitkeep"]]
             for dir in dirs:
                 process_directory(repo, dir.path)
             try:
@@ -147,6 +147,9 @@ def process_directory(repo, path):
             else:
                 issue_id = int(file.name.replace(".md", ""))
             
+            if len(files) == 1:
+                parent = issue_id
+                
             body = file.decoded_content.decode("utf-8")
             auditor = body.split("\n")[0]
             issue_title = re.match(r"^(?:[#\s]+)(.*)$", body.split("\n")[4]).group(1)
@@ -169,7 +172,7 @@ def process_directory(repo, path):
             dir_issues_ids.append(issue_id)
 
         # Set the parent field for all duplicates in this directory
-        if len(files) > 1 and parent is None and severity != "false":
+        if parent is None and severity != "false":
             raise Exception(
                 "Issue %s does not have a primary file (-best.md)." % item.path
             )
